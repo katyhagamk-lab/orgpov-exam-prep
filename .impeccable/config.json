@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "radial-halo",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-26T13:22:35.702Z",
+        "reason": "Claude: user's binding design references (оргпов дизайн/*.jpeg) place frosted-glass cards over a soft tinted ambient; the glow is the ground the glass blurs"
+      }
+    ]
+  }
+}
