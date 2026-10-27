@@ -36,7 +36,7 @@ window.D = (function () {
   function steps(items, o) {
     o = o || {}; const n = items.length;
     return '<div class="stairs" style="--n:' + n + '">' + items.map(function (it, i) {
-      it = tx(it); return '<div class="st ' + col(it, i) + '" style="--h:' + (o.flat ? 100 : Math.round(30 + 70 * i / Math.max(1, n - 1))) + '%"><span class="sn">' + (o.noNum ? '' : (i + 1)) + '</span><b>' + e(it.t) + '</b>' + (it.d ? '<span>' + e(it.d) + '</span>' : '') + '</div>';
+      it = tx(it); return '<div class="st ' + col(it, i) + '" style="--h:' + (o.flat ? 100 : Math.round(46 + 54 * i / Math.max(1, n - 1))) + '%"><span class="sn">' + (o.noNum ? '' : (i + 1)) + '</span><b>' + e(it.t) + '</b>' + (it.d ? '<span>' + e(it.d) + '</span>' : '') + '</div>';
     }).join('') + '</div>';
   }
   /* цикл */

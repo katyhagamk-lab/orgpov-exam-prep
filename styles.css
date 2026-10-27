@@ -243,13 +243,13 @@ a:hover .go { transform: rotate(45deg); }
 .chartcard .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
 .chartcard .head .ttl { display: flex; align-items: center; gap: 10px; }
 .chartcard .head .ic { width: 34px; height: 34px; }
-.bars { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); align-items: end; gap: 6px; height: 170px; padding-top: 30px; }
+.bars { display: grid; grid-template-columns: repeat(var(--n, 15), minmax(0, 1fr)); align-items: end; gap: 6px; height: 170px; padding-top: 30px; }
 .bars .b { position: relative; height: 100%; display: flex; align-items: flex-end; text-decoration: none; }
 .bars .b i { display: block; width: 100%; border-radius: 10px; background: var(--bar); opacity: .8; min-height: 8px; transition: height 1s var(--ease); }
 .bars .b.hi i { background: var(--bar-hi); opacity: 1; }
 .bars .b .v { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--h) + 6px); font-size: 10.5px; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .bars .b.hi .v { padding: 2px 7px; border-radius: 99px; background: var(--pill); color: var(--pill-ink); }
-.bars-x { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 6px; margin-top: 8px; font-size: 11px; color: var(--ink-3); text-align: center; font-variant-numeric: tabular-nums; }
+.bars-x { display: grid; grid-template-columns: repeat(var(--n, 15), minmax(0, 1fr)); gap: 6px; margin-top: 8px; font-size: 11px; color: var(--ink-3); text-align: center; font-variant-numeric: tabular-nums; }
 .line svg.lc { width: 100%; height: auto; display: block; overflow: visible; }
 .line .grid { stroke: var(--line-strong); stroke-dasharray: 2 4; }
 .line .ax { fill: var(--ink-3); font-size: 10px; font-family: var(--font); }
@@ -668,3 +668,19 @@ details.more[open] summary { margin-bottom: 12px; }
 .mz .dx { text-align: center; }
 .mz-top { grid-area: top; border-radius: 40px 40px 14px 14px; } .mz-mid { grid-area: mid; min-height: 90px; } .mz-left { grid-area: left; border-radius: 40px 14px 14px 40px; } .mz-right { grid-area: right; border-radius: 14px 40px 40px 14px; } .mz-bot { grid-area: bot; border-radius: 14px 14px 40px 40px; min-height: 80px; }
 @media (max-width: 860px) { .spec { min-width: 0; } .spec-row { flex-wrap: wrap; } .sp { flex: 1 1 30%; } .fig { padding: 12px; } }
+
+/* пояснение и теория после ответа */
+.right-ans { background: var(--card-solid); border-radius: 14px; padding: 10px 14px; font-size: 14px; }
+.right-ans ul, .right-ans ol { margin: 6px 0 4px; padding-left: 20px; }
+.right-ans li { margin-bottom: 3px; }
+.why { font-size: 14.5px; line-height: 1.5; }
+.thbox { margin-top: 4px; padding: 14px; border-radius: 18px; background: var(--card-solid); border: 1px solid var(--line); display: grid; gap: 10px; }
+.thhead { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
+.thhead b { font-weight: 600; }
+.thhead .faint { font-size: 12.5px; }
+.thbox .simple { margin: 0; }
+.thbox .fig { margin: 0; }
+.thbox .btn { justify-self: start; }
+.thbox details.more[open] .body { font-size: 14px; }
+.flash-sec { animation: secFlash 1.6s var(--ease); }
+@keyframes secFlash { 0%, 30% { box-shadow: 0 0 0 3px var(--lime), var(--shadow); } }

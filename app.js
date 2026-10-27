@@ -70,6 +70,46 @@ function plural(n, a, b, c) { const m10 = n % 10, m100 = n % 100; if (m10 === 1 
 function toast(msg) { const t = document.querySelector('.toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('on'); }, 2200); }
 function srcChip(q) { return '<span class="chip ' + q.src + '" title="' + esc(SRC_LONG[q.src]) + '"><span class="dot"></span>' + SRC[q.src] + '</span>'; }
 function rightOf(p) { return p[1].trim(); }
+/* Раздел теории, который объясняет задание: по пересечению основ слов. */
+const plainOf = function (html) { const d = document.createElement('div'); d.innerHTML = html; return d.textContent; };
+function stems(t) { return String(t).toLowerCase().replace(/ё/g, 'е').split(/[^a-zа-я0-9]+/).filter(function (w) { return w.length >= 4; }).map(function (w) { return w.slice(0, 5); }); }
+function answerText(q) {
+  if (q.t === 'single') return q.o[q.a];
+  if (q.t === 'multi') return q.a.map(function (k) { return q.o[k]; }).join(' ');
+  if (q.t === 'match') return q.pairs.map(function (p) { return p[0] + ' ' + p[1]; }).join(' ');
+  if (q.t === 'order') return q.order.join(' ');
+  if (q.t === 'fill') return q.fill.map(function (f) { return f[0]; }).join(' ');
+  return q.model || '';
+}
+function theoryFor(q) {
+  if (q._th !== undefined) return q._th;
+  if (q.th) { const fi = q.topic.sections.findIndex(function (x) { return x.h.indexOf(q.th) >= 0; }); if (fi >= 0) return (q._th = fi); }
+  const want = {}; stems(q.q + ' ' + answerText(q) + ' ' + (q.x || '')).forEach(function (w) { want[w] = 1; });
+  let best = null, bestSc = 0;
+  q.topic.sections.forEach(function (sec, i) {
+    if (!sec._st) { sec._st = {}; stems(sec.h + ' ' + sec.simple + ' ' + plainOf(sec.body) + ' ' + plainOf([].concat(sec.fig || []).join(' '))).forEach(function (w) { sec._st[w] = (sec._st[w] || 0) + 1; }); sec._hs = stems(sec.h); }
+    let sc = 0; Object.keys(want).forEach(function (w) { if (sec._st[w]) sc += 1 + Math.min(2, sec._st[w] / 4); });
+    sec._hs.forEach(function (w) { if (want[w]) sc += 3; });
+    if (sc > bestSc) { bestSc = sc; best = i; }
+  });
+  q._th = best; return best;
+}
+function theoryBox(q) {
+  const i = theoryFor(q); if (i == null) return '';
+  const sec = q.topic.sections[i]; const f = [].concat(sec.fig || []).filter(function (x) { return x.indexOf('class="fig"') >= 0; })[0];
+  return '<div class="thbox"><div class="thhead"><span class="chip lime">Теория</span><b>' + esc(sec.h) + '</b><span class="faint">тема ' + q.topic.n + ' · ' + esc(q.topic.short) + '</span></div>' +
+    '<div class="simple"><b>Проще</b><span>' + esc(sec.simple) + '</span></div>' + (f || '') +
+    '<details class="more"><summary>Полный текст раздела</summary><div class="body">' + sec.body + '</div></details>' +
+    '<a class="btn ghost" href="#t/' + q.topic.id + '/s' + i + '">Открыть раздел в теме ' + ico('arrow') + '</a></div>';
+}
+function correctHtml(q) {
+  if (q.t === 'single') return '<div class="right-ans"><b>Верный ответ:</b> ' + esc(q.o[q.a]) + '</div>';
+  if (q.t === 'multi') return '<div class="right-ans"><b>Верные ответы:</b><ul>' + q.a.map(function (k) { return '<li>' + esc(q.o[k]) + '</li>'; }).join('') + '</ul></div>';
+  if (q.t === 'match') return '<div class="right-ans"><b>Верные пары:</b><ul>' + q.pairs.map(function (p) { return '<li>' + esc(p[0]) + ' → <b>' + esc(rightOf(p)) + '</b>' + (p[2] ? ' (или ' + esc(p[2].join(', ')) + ')' : '') + '</li>'; }).join('') + '</ul>' + (q.extra ? '<span class="faint">Лишний вариант: ' + esc(q.extra.join('; ')) + '</span>' : '') + '</div>';
+  if (q.t === 'order') return '<div class="right-ans"><b>Верный порядок:</b><ol>' + q.order.map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ol></div>';
+  if (q.t === 'fill') return '<div class="right-ans"><b>Верно:</b> ' + q.fill.map(function (f) { return esc(f[0]); }).join(' · ') + (q.fill.some(function (f) { return f.length > 1; }) ? '<br><span class="faint">Засчитываются и варианты: ' + q.fill.map(function (f) { return esc(f.slice(1).join(', ')); }).filter(Boolean).join(' · ') + '</span>' : '') + '</div>';
+  return '';
+}
 function matchOk(p, v) { return v === rightOf(p) || (p[2] || []).indexOf(v) >= 0; }
 
 const ICO = {
@@ -169,10 +209,11 @@ const SPRINT = [
   { id: 's9', at: 260, min: 15, title: 'Перерыв и «Ошибки»', note: 'Еда и короткий повтор', href: '#mistakes', brk: true },
   { id: 's10', at: 275, min: 45, title: 'Поведение, установки, личность', note: 'Темы 2, 3, 4, 5 в режиме «Кратко»', href: '#t/behavior', topics: ['behavior', 'attitudes', 'personality', 'perception'] },
   { id: 's11', at: 320, min: 30, title: 'Организация, введение, поколения', note: 'Темы 1, 7, 12 в режиме «Кратко»', href: '#t/organization', topics: ['organization', 'intro', 'generations'], skip: true },
-  { id: 's12', at: 350, min: 50, title: 'Пробный экзамен и разбор', note: 'Цель — от 80%', href: '#exam' },
-  { id: 's13', at: 400, min: 30, title: 'Ошибки до нуля и открытые вслух', note: 'Потом карточки «кто автор?»', href: '#mistakes' }
+  { id: 's11b', at: 350, min: 20, title: 'Литература и фильмы', note: 'Тема 15: Huawei, Синек, «Я и другие», «Волна», Мэйо', href: '#t/lit', topics: ['lit'], skip: true },
+  { id: 's12', at: 370, min: 50, title: 'Пробный экзамен и разбор', note: 'Цель — от 80%', href: '#exam' },
+  { id: 's13', at: 420, min: 30, title: 'Ошибки до нуля и открытые вслух', note: 'Потом карточки «кто автор?»', href: '#mistakes' }
 ];
-const SPRINT_MIN = 430;
+const SPRINT_MIN = 450;
 /* Приоритет темы = сколько вопросов по ней было в сливах. */
 function priority(t) { const n = t.qs.filter(function (q) { return q.src === 'leak'; }).length; return n >= 3 ? 'top' : n >= 2 ? 'mid' : 'low'; }
 const PRI_NAME = { top: 'главное', mid: 'важно', low: 'быстро' };
@@ -188,10 +229,10 @@ function srcCard(k, cls, icon, name) {
     '<div class="foot"><span class="dots" aria-hidden="true">' + list.map(function (q) { const r = S.q[q.id]; return '<i class="' + (r && r.last ? 'on' : '') + '"></i>'; }).join('') + '</span><span class="muted">' + (wrong ? 'на повтор ' + wrong : 'ошибок нет') + '</span></div></a>';
 }
 function barsChart(nt) {
-  return '<div class="bars">' + TOPICS.map(function (t) {
+  return '<div class="bars" style="--n:' + TOPICS.length + '">' + TOPICS.map(function (t) {
     const s = topicStat(t); const p = Math.round(s.ok / s.n * 100); const h = Math.max(6, p);
     return '<a class="b' + (t === nt ? ' hi' : '') + '" href="#t/' + t.id + '" style="--h:' + h + '%" title="' + t.n + '. ' + esc(t.title) + ': ' + p + '%" aria-label="Тема ' + t.n + ', ' + p + '% верно"><span class="v">' + p + '%</span><i style="height:' + h + '%"></i></a>';
-  }).join('') + '</div><div class="bars-x">' + TOPICS.map(function (t) { return '<span>' + t.n + '</span>'; }).join('') + '</div>';
+  }).join('') + '</div><div class="bars-x" style="--n:' + TOPICS.length + '">' + TOPICS.map(function (t) { return '<span>' + t.n + '</span>'; }).join('') + '</div>';
 }
 function lineChart() {
   const ex = S.exams.slice(-8);
@@ -290,8 +331,8 @@ function viewTheory(t) {
   const nx = TOPICS[TOPICS.indexOf(t) + 1]; const brief = S.short === true;
   return '<div class="view">' + topicHead(t, 'th') + '<div class="theory' + (brief ? ' brief' : '') + '">' +
     (brief ? '<p class="faint" style="margin:0 4px;font-size:13.5px">Режим «Кратко»: суть и схемы каждого раздела, ловушки и запоминалка. Определения и таблицы — по кнопке «Подробнее».</p>' : '') +
-    t.sections.map(function (s) {
-      return '<section class="card tsec"><h2>' + esc(s.h) + '</h2><div class="simple"><b>Проще</b><span>' + esc(s.simple) + '</span></div>' + (s.fig ? '<div class="figs">' + [].concat(s.fig).join('') + '</div>' : '') +
+    t.sections.map(function (s, si) {
+      return '<section class="card tsec" id="sec-' + si + '"><h2>' + esc(s.h) + '</h2><div class="simple"><b>Проще</b><span>' + esc(s.simple) + '</span></div>' + (s.fig ? '<div class="figs">' + [].concat(s.fig).join('') + '</div>' : '') +
         (brief ? '<details class="more"><summary>Подробнее для экзамена</summary><div class="body">' + s.body + '</div></details>' : '<div class="body">' + s.body + '</div>') + '</section>';
     }).join('') +
     '<div class="traps"><div class="card"><h2>Ловушки</h2><ul>' + t.traps.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' +
@@ -434,15 +475,10 @@ function renderQ(host, q, opts) {
     if (q.t === 'open') {
       h += '<div>Ключевые мысли, которые ждёт проверяющий:</div>' + card._keysHtml(skipped ? null : res.hits) + '<div class="model"><b>Образцовый ответ.</b> ' + esc(q.model) + '</div>';
       if (!skipped) h += '<div class="selfgrade"><span class="faint" style="font-size:13px">Проверка ищет ключевые слова. Оцени себя честно:</span><button type="button" class="btn" data-g="1">Полностью</button><button type="button" class="btn" data-g="0.5">Наполовину</button><button type="button" class="btn" data-g="0">Ноль</button></div>';
-    } else if (q.t === 'fill') {
-      h += '<div>Верно: <b>' + q.fill.map(function (f) { return esc(f[0]); }).join(' · ') + '</b></div>';
-    } else if (q.t === 'order') {
-      h += '<ol style="margin:0;padding-left:20px">' + q.order.map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ol>';
-    } else if (q.t === 'match' && skipped) {
-      h += '<ul style="margin:0;padding-left:20px">' + q.pairs.map(function (p) { return '<li>' + esc(p[0]) + ' → <b>' + esc(rightOf(p)) + '</b></li>'; }).join('') + '</ul>';
-    }
-    if (q.x) h += '<div>' + esc(q.x) + '</div>';
-    if (!exam) h += '<div class="faint" style="font-size:12.5px">' + esc(q.ref) + '</div>';
+    } else h += correctHtml(q);
+    if (q.x) h += '<div class="why"><b>Почему так.</b> ' + esc(q.x) + '</div>';
+    if (!exam) h += '<div class="faint" style="font-size:12.5px">Источник: ' + esc(q.ref) + '</div>';
+    h += theoryBox(q);
     fbh.innerHTML = h + '</div>';
     fbh.querySelectorAll('[data-g]').forEach(function (b) {
       b.onclick = function () {
@@ -682,7 +718,7 @@ function viewCheat() {
     '<section class="sec card"><h2 style="margin-bottom:12px">Авторы и их идеи</h2><div class="authors">' + window.CARDS.map(function (c) { return '<div><b>' + esc(c[0]) + '</b><span>' + esc(c[1]) + '</span></div>'; }).join('') + '</div></section></div>';
 }
 function viewMaterials() {
-  return '<div class="view"><header class="card glow green thero"><div><h1>Материалы</h1><p class="lead">Обязательные книги, фильмы и статьи из лекции 1 — о чём они и к каким темам относятся, чтобы сослаться на них в открытом ответе.</p></div></header><div class="grid2">' +
+  return '<div class="view"><header class="card glow green thero"><div><h1>Материалы</h1><p class="lead">Обязательные книги, фильмы и статьи из лекции 1 — о чём они и к каким темам относятся, чтобы сослаться на них в открытом ответе.</p><div class="btns"><a class="btn pri" href="#t/lit">Теория и задания по литературе — тема 15 ' + ico('arrow') + '</a></div></div></header><div class="grid2">' +
     window.MATERIALS.map(function (m) {
       return '<article class="card mat"><div class="chips"><span class="chip ' + (m.kind === 'Книга' ? 'teacher' : m.kind === 'Фильм' ? 'leak' : 'mine') + '"><span class="dot"></span>' + m.kind + '</span><span class="chip out">' + (m.must ? 'обязательно' : 'к семинару 1') + '</span></div><h3>' + esc(m.title) + '</h3><p class="muted" style="margin:0">' + esc(m.about) + '</p><div class="chips">' + m.link.map(function (l) { return '<span class="chip">' + esc(l) + '</span>'; }).join('') + '</div>' + (m.url ? '<a href="' + esc(m.url) + '" target="_blank" rel="noopener" style="font-size:14px">Открыть статью</a>' : '') + '</article>';
     }).join('') + '</div></div>';
@@ -744,6 +780,7 @@ function route() {
     if (!t) { location.hash = '#home'; return; }
     side = t.id;
     if (p[2] === 'q') { html = viewQuiz(t); bind = function () { bindQuiz(t); }; }
+    else if (p[2] && p[2][0] === 's') { const si = +p[2].slice(1); html = viewTheory(t); bind = function () { const b = main.querySelector('[data-read]'); if (b) b.onclick = function () { S.read[t.id] = 1; save(); }; main.querySelectorAll('[data-brief]').forEach(function (x) { x.onclick = function () { S.short = x.dataset.brief === '1'; save(); location.hash = '#t/' + t.id; }; }); setTimeout(function () { const el = document.getElementById('sec-' + si); if (el) { el.scrollIntoView({ block: 'start' }); el.classList.add('flash-sec'); } }, 60); }; }
     else { html = viewTheory(t); bind = function () { const b = main.querySelector('[data-read]'); if (b) b.onclick = function () { S.read[t.id] = 1; save(); }; main.querySelectorAll('[data-brief]').forEach(function (x) { x.onclick = function () { S.short = x.dataset.brief === '1'; save(); route(); }; }); }; }
   }
   else if (h.indexOf('bank') === 0) { html = viewBank(h); bind = function () { bindBank(h); }; nav = parseBank(h).src === 'leak' ? 'leak' : ''; }
@@ -760,7 +797,7 @@ function route() {
   else { location.hash = '#home'; return; }
   curNav = nav; curSide = side; paintNav(nav); paintRail(side);
   main.innerHTML = html; if (bind) bind();
-  window.scrollTo(0, 0);
+  if (!(h.indexOf('t/') === 0 && /\/s\d+$/.test(h))) window.scrollTo(0, 0);
   const t = side ? TBY[side] : null;
   document.title = (t ? t.short + ' · ' : '') + 'Экзамен по оргповедению';
 }
