@@ -33,9 +33,18 @@ function save() {
     if (raw) { const o = JSON.parse(raw); if (o && o.q) Object.keys(o.q).forEach(function (k) { if (!S.q[k]) S.q[k] = o.q[k]; }); if (o && o.read) Object.keys(o.read).forEach(function (k) { if (!S.read[k] && !wiping) S.read[k] = o.read[k]; }); }
     localStorage.setItem(KEY, JSON.stringify(S));
   } catch (e) { storageOK = false; }
+  hubSum();
 }
 let wiping = false;
 load();
+/* Итог для общей страницы «Учёба» (../ucheba/): она читает его и показывает прогресс по предмету. */
+const HUB_URL = /(^|\.)github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname) ? '../ucheba/' : 'https://katyhagamk-lab.github.io/ucheba/';
+function hubSum() {
+  try {
+    const read = TOPICS.filter(function (t) { return S.read[t.id]; }).length; const cur = curStep();
+    localStorage.setItem('ucheba:sum:orgpov', JSON.stringify({ pct: courseProgress(), stat: 'тем прочитано ' + read + ' из ' + TOPICS.length + ' · заданий решено ' + solved(ALLQ) + ' из ' + ALLQ.length, next: cur ? cur.title : '', at: Date.now() }));
+  } catch (e) {}
+}
 // Другая вкладка сохранила прогресс — подхватываем его, чтобы эта вкладка не затёрла его старой копией.
 window.addEventListener('storage', function (e) { if (e.key === KEY) { const th = S.theme; load(); S.theme = S.theme || th; if (typeof route === 'function' && !(EX && !EX.done)) route(); } });
 function applyTheme() { document.documentElement.setAttribute('data-theme', S.theme === 'dark' ? 'dark' : 'light'); }
@@ -113,6 +122,7 @@ function correctHtml(q) {
 function matchOk(p, v) { return v === rightOf(p) || (p[2] || []).indexOf(v) >= 0; }
 
 const ICO = {
+  hub: '<circle cx="7.5" cy="7.5" r="3"/><circle cx="16.5" cy="7.5" r="3"/><circle cx="7.5" cy="16.5" r="3"/><circle cx="16.5" cy="16.5" r="3"/>',
   home: '<rect x="3.5" y="3.5" width="7" height="7" rx="2.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2.2"/>',
   leak: '<path d="M7 4.5h6.5L18 9v10a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 19V6a1.5 1.5 0 0 1 1-1.5z"/><path d="M13 4.5V9h5"/><path d="M9.5 14l2 2 3.5-4"/>',
   teacher: '<path d="M3 9l9-4.5L21 9l-9 4.5z"/><path d="M7 11v4.5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V11"/><path d="M21 9v5"/>',
@@ -173,7 +183,7 @@ function shell() {
         '<div class="rail-foot"><a class="iconbtn" href="#sync" title="Перенести прогресс" aria-label="Перенести прогресс">' + ico('sync') + '</a><div class="avatar" aria-hidden="true">Е</div></div>' +
       '</aside>' +
       '<div class="screen">' +
-        '<header class="top"><nav class="pills" aria-label="Разделы"></nav><button class="iconbtn" id="theme" type="button"></button></header>' +
+        '<header class="top"><nav class="pills" aria-label="Разделы"></nav><a class="iconbtn" href="' + HUB_URL + '" title="Все предметы" aria-label="Все предметы">' + ico('hub') + '</a><button class="iconbtn" id="theme" type="button"></button></header>' +
         (storageOK ? '' : '<div class="storage-warn" role="alert">Этот браузер не даёт сохранять данные (например, приватный режим). Прогресс пропадёт после закрытия вкладки — открой платформу в обычном окне.</div>') +
         '<main id="main" tabindex="-1"></main>' +
       '</div>' +
@@ -797,6 +807,7 @@ function route() {
   else { location.hash = '#home'; return; }
   curNav = nav; curSide = side; paintNav(nav); paintRail(side);
   main.innerHTML = html; if (bind) bind();
+  hubSum();
   if (!(h.indexOf('t/') === 0 && /\/s\d+$/.test(h))) window.scrollTo(0, 0);
   const t = side ? TBY[side] : null;
   document.title = (t ? t.short + ' · ' : '') + 'Экзамен по оргповедению';
