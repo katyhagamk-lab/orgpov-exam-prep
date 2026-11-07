@@ -684,3 +684,9 @@ details.more[open] summary { margin-bottom: 12px; }
 .thbox details.more[open] .body { font-size: 14px; }
 .flash-sec { animation: secFlash 1.6s var(--ease); }
 @keyframes secFlash { 0%, 30% { box-shadow: 0 0 0 3px var(--lime), var(--shadow); } }
+
+/* Кнопка «Все предметы»: одинаковая и на одном месте (слева в шапке) во всех платформах */
+.hub-btn { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px 0 12px; border-radius: 999px; background: #fff; color: #1B1C1F; font-size: 15px; font-weight: 450; white-space: nowrap; flex: none; text-decoration: none; box-shadow: 0 1px 4px rgba(0,0,0,.08); transition: transform .15s var(--ease); }
+.hub-btn:hover { transform: scale(1.03); } .hub-btn:active { transform: scale(.97); }
+.hub-btn svg { width: 20px; height: 20px; }
+@media (max-width: 1180px) { .hub-btn { width: 44px; padding: 0; justify-content: center; } .hub-btn span { display: none; } }

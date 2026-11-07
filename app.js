@@ -180,10 +180,10 @@ function shell() {
       '<aside class="rail" aria-label="Темы курса">' +
         '<a class="logo" href="#home" aria-label="На пульт"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="15" cy="20" r="10" fill="var(--lime)"/><circle cx="25" cy="20" r="10" fill="none" stroke="var(--ink)" stroke-width="2.4"/></svg></a>' +
         '<nav class="rail-topics"></nav>' +
-        '<div class="rail-foot"><a class="iconbtn" href="#sync" title="Перенести прогресс" aria-label="Перенести прогресс">' + ico('sync') + '</a><div class="avatar" aria-hidden="true">Е</div></div>' +
+        '<div class="rail-foot"><a class="iconbtn" href="#sync" title="Перенести прогресс" aria-label="Перенести прогресс">' + ico('sync') + '</a></div>' +
       '</aside>' +
       '<div class="screen">' +
-        '<header class="top"><nav class="pills" aria-label="Разделы"></nav><a class="iconbtn" href="' + HUB_URL + '" title="Все предметы" aria-label="Все предметы">' + ico('hub') + '</a><button class="iconbtn" id="theme" type="button"></button></header>' +
+        '<header class="top"><a class="hub-btn" href="' + HUB_URL + '" title="Все предметы" aria-label="Все предметы">' + ico('hub') + '<span>Все предметы</span></a><nav class="pills" aria-label="Разделы"></nav><button class="iconbtn" id="theme" type="button"></button></header>' +
         (storageOK ? '' : '<div class="storage-warn" role="alert">Этот браузер не даёт сохранять данные (например, приватный режим). Прогресс пропадёт после закрытия вкладки — открой платформу в обычном окне.</div>') +
         '<main id="main" tabindex="-1"></main>' +
       '</div>' +
@@ -268,7 +268,7 @@ function sprintCard(where) {
     '<div class="head"><div class="ttl"><span class="ic">' + ico('cal') + '</span><div><h2>Спринт на 7 часов</h2><div class="faint" style="font-size:12.5px">порядок — по числу вопросов в сливах</div></div></div>' +
     (t0 ? '<button type="button" class="btn ghost sprint-reset">Сбросить таймер</button>' : '<button type="button" class="btn pri sprint-start">Старт ' + ico('arrow') + '</button>') + '</div>' +
     '<div class="sprint-meter"><div class="nums"><span class="thin big">' + (t0 ? hm(el) : '0:00') + '</span><span class="faint">из ~' + hm(SPRINT_MIN) + '</span></div><div class="chips">' + status + '<span class="chip out">шагов ' + done + ' из ' + SPRINT.length + '</span></div></div>' +
-    '<div class="bar sbar"><i style="width:' + Math.min(100, Math.round((t0 ? el : 0) / SPRINT_MIN * 100)) + '%"></i><b style="left:' + Math.round(planned / SPRINT_MIN * 100) + '%" title="где ты должна быть по плану"></b></div>' +
+    '<div class="bar sbar"><i style="width:' + Math.min(100, Math.round((t0 ? el : 0) / SPRINT_MIN * 100)) + '%"></i><b style="left:' + Math.round(planned / SPRINT_MIN * 100) + '%" title="где по плану нужно быть сейчас"></b></div>' +
     '<ol class="tl">' + SPRINT.map(function (s) {
       const on = !!S.plan[s.id]; const isCur = cur && cur.id === s.id;
       return '<li class="tli' + (on ? ' done' : '') + (isCur ? ' now' : '') + (s.brk ? ' brk' : '') + '"><span class="at num">' + hm(s.at) + '</span><span class="dotline" aria-hidden="true"></span>' +
@@ -282,7 +282,7 @@ function viewHome() {
   const td = S.log[today()] || 0;
   const zone = p >= 80 ? 'Уровень «8 и выше»' : p >= 60 ? 'Уровень «6 и выше»' : p >= 40 ? 'Уровень «4 и выше»' : 'Пока ниже порога 40%';
   return '<div class="view dash"><div class="col">' +
-    '<div class="greet"><h1>Привет, Екатерина!<span>До экзамена 6–8 часов. Идём по самым дорогим темам</span></h1></div>' +
+    '<div class="greet"><h1>Привет!<span>План на 6–8 часов: идём по самым дорогим темам</span></h1></div>' +
     (cur ? '<a class="card glow green now-card" href="' + cur.href + '"><div class="head"><span class="chip lime">сейчас · шаг ' + (SPRINT.indexOf(cur) + 1) + ' из ' + SPRINT.length + '</span>' + go() + '</div><div><h2>' + cur.title + '</h2><p class="muted">' + cur.note + '</p></div><div class="row"><span class="thin big">' + cur.min + '<small> мин</small></span><span class="btn pri" aria-hidden="true">Начать ' + ico('arrow') + '</span></div></a>'
       : '<div class="card glow green now-card"><h2>Спринт пройден</h2><p class="muted">Последний круг: <a href="#mistakes">ошибки</a>, <a href="#cheat">шпаргалка</a> и сон.</p></div>') +
     sprintCard('only-narrow') +
@@ -457,7 +457,7 @@ function renderQ(host, q, opts) {
     getRes = function () { const ok = inputs.every(good); return { ok: ok, score: ok ? q.pts : 0, state: { vals: inputs.map(function (i) { return i.value; }) } }; };
     reveal = function () { inputs.forEach(function (i) { i.disabled = true; i.classList.add(good(i) ? 'right' : 'wrong'); }); };
   } else if (q.t === 'open') {
-    const ta = el('<textarea placeholder="Ответ своими словами. Не уверена — всё равно попробуй: попытка вспомнить укрепляет память." aria-label="Ваш ответ"></textarea>');
+    const ta = el('<textarea placeholder="Ответ своими словами. Сомневаешься — всё равно попробуй: попытка вспомнить укрепляет память." aria-label="Ваш ответ"></textarea>');
     if (prior && prior.text) ta.value = prior.text; ta.oninput = upd; body.appendChild(ta);
     const keys = q.keys.map(function (k) { const p = k.split('|'); return { t: p[0], st: p[1].split(',').map(norm).filter(Boolean) }; });
     ready = function () { return ta.value.trim().length > 0; };

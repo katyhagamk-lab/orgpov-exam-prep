@@ -688,6 +688,12 @@ details.more[open] summary { margin-bottom: 12px; }
 .flash-sec { animation: secFlash 1.6s var(--ease); }
 @keyframes secFlash { 0%, 30% { box-shadow: 0 0 0 3px var(--lime), var(--shadow); } }
 
+/* Кнопка «Все предметы»: одинаковая и на одном месте (слева в шапке) во всех платформах */
+.hub-btn { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px 0 12px; border-radius: 999px; background: #fff; color: #1B1C1F; font-size: 15px; font-weight: 450; white-space: nowrap; flex: none; text-decoration: none; box-shadow: 0 1px 4px rgba(0,0,0,.08); transition: transform .15s var(--ease); }
+.hub-btn:hover { transform: scale(1.03); } .hub-btn:active { transform: scale(.97); }
+.hub-btn svg { width: 20px; height: 20px; }
+@media (max-width: 1180px) { .hub-btn { width: 44px; padding: 0; justify-content: center; } .hub-btn span { display: none; } }
+
 </style>
 <script>try{var s=JSON.parse(localStorage.getItem('orgpov-prep-v1')||'{}');document.documentElement.setAttribute('data-theme',s.theme==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}</script>
 <div id="app"></div>
@@ -2440,9 +2446,18 @@ function save() {
     if (raw) { const o = JSON.parse(raw); if (o && o.q) Object.keys(o.q).forEach(function (k) { if (!S.q[k]) S.q[k] = o.q[k]; }); if (o && o.read) Object.keys(o.read).forEach(function (k) { if (!S.read[k] && !wiping) S.read[k] = o.read[k]; }); }
     localStorage.setItem(KEY, JSON.stringify(S));
   } catch (e) { storageOK = false; }
+  hubSum();
 }
 let wiping = false;
 load();
+/* Итог для общей страницы «Учёба» (../ucheba/): она читает его и показывает прогресс по предмету. */
+const HUB_URL = /(^|\.)github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname) ? '../ucheba/' : 'https://katyhagamk-lab.github.io/ucheba/';
+function hubSum() {
+  try {
+    const read = TOPICS.filter(function (t) { return S.read[t.id]; }).length; const cur = curStep();
+    localStorage.setItem('ucheba:sum:orgpov', JSON.stringify({ pct: courseProgress(), stat: 'тем прочитано ' + read + ' из ' + TOPICS.length + ' · заданий решено ' + solved(ALLQ) + ' из ' + ALLQ.length, next: cur ? cur.title : '', at: Date.now() }));
+  } catch (e) {}
+}
 // Другая вкладка сохранила прогресс — подхватываем его, чтобы эта вкладка не затёрла его старой копией.
 window.addEventListener('storage', function (e) { if (e.key === KEY) { const th = S.theme; load(); S.theme = S.theme || th; if (typeof route === 'function' && !(EX && !EX.done)) route(); } });
 function applyTheme() { document.documentElement.setAttribute('data-theme', S.theme === 'dark' ? 'dark' : 'light'); }
@@ -2520,6 +2535,7 @@ function correctHtml(q) {
 function matchOk(p, v) { return v === rightOf(p) || (p[2] || []).indexOf(v) >= 0; }
 
 const ICO = {
+  hub: '<circle cx="7.5" cy="7.5" r="3"/><circle cx="16.5" cy="7.5" r="3"/><circle cx="7.5" cy="16.5" r="3"/><circle cx="16.5" cy="16.5" r="3"/>',
   home: '<rect x="3.5" y="3.5" width="7" height="7" rx="2.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2.2"/>',
   leak: '<path d="M7 4.5h6.5L18 9v10a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 19V6a1.5 1.5 0 0 1 1-1.5z"/><path d="M13 4.5V9h5"/><path d="M9.5 14l2 2 3.5-4"/>',
   teacher: '<path d="M3 9l9-4.5L21 9l-9 4.5z"/><path d="M7 11v4.5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V11"/><path d="M21 9v5"/>',
@@ -2577,10 +2593,10 @@ function shell() {
       '<aside class="rail" aria-label="Темы курса">' +
         '<a class="logo" href="#home" aria-label="На пульт"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="15" cy="20" r="10" fill="var(--lime)"/><circle cx="25" cy="20" r="10" fill="none" stroke="var(--ink)" stroke-width="2.4"/></svg></a>' +
         '<nav class="rail-topics"></nav>' +
-        '<div class="rail-foot"><a class="iconbtn" href="#sync" title="Перенести прогресс" aria-label="Перенести прогресс">' + ico('sync') + '</a><div class="avatar" aria-hidden="true">Е</div></div>' +
+        '<div class="rail-foot"><a class="iconbtn" href="#sync" title="Перенести прогресс" aria-label="Перенести прогресс">' + ico('sync') + '</a></div>' +
       '</aside>' +
       '<div class="screen">' +
-        '<header class="top"><nav class="pills" aria-label="Разделы"></nav><button class="iconbtn" id="theme" type="button"></button></header>' +
+        '<header class="top"><a class="hub-btn" href="' + HUB_URL + '" title="Все предметы" aria-label="Все предметы">' + ico('hub') + '<span>Все предметы</span></a><nav class="pills" aria-label="Разделы"></nav><button class="iconbtn" id="theme" type="button"></button></header>' +
         (storageOK ? '' : '<div class="storage-warn" role="alert">Этот браузер не даёт сохранять данные (например, приватный режим). Прогресс пропадёт после закрытия вкладки — открой платформу в обычном окне.</div>') +
         '<main id="main" tabindex="-1"></main>' +
       '</div>' +
@@ -2665,7 +2681,7 @@ function sprintCard(where) {
     '<div class="head"><div class="ttl"><span class="ic">' + ico('cal') + '</span><div><h2>Спринт на 7 часов</h2><div class="faint" style="font-size:12.5px">порядок — по числу вопросов в сливах</div></div></div>' +
     (t0 ? '<button type="button" class="btn ghost sprint-reset">Сбросить таймер</button>' : '<button type="button" class="btn pri sprint-start">Старт ' + ico('arrow') + '</button>') + '</div>' +
     '<div class="sprint-meter"><div class="nums"><span class="thin big">' + (t0 ? hm(el) : '0:00') + '</span><span class="faint">из ~' + hm(SPRINT_MIN) + '</span></div><div class="chips">' + status + '<span class="chip out">шагов ' + done + ' из ' + SPRINT.length + '</span></div></div>' +
-    '<div class="bar sbar"><i style="width:' + Math.min(100, Math.round((t0 ? el : 0) / SPRINT_MIN * 100)) + '%"></i><b style="left:' + Math.round(planned / SPRINT_MIN * 100) + '%" title="где ты должна быть по плану"></b></div>' +
+    '<div class="bar sbar"><i style="width:' + Math.min(100, Math.round((t0 ? el : 0) / SPRINT_MIN * 100)) + '%"></i><b style="left:' + Math.round(planned / SPRINT_MIN * 100) + '%" title="где по плану нужно быть сейчас"></b></div>' +
     '<ol class="tl">' + SPRINT.map(function (s) {
       const on = !!S.plan[s.id]; const isCur = cur && cur.id === s.id;
       return '<li class="tli' + (on ? ' done' : '') + (isCur ? ' now' : '') + (s.brk ? ' brk' : '') + '"><span class="at num">' + hm(s.at) + '</span><span class="dotline" aria-hidden="true"></span>' +
@@ -2679,7 +2695,7 @@ function viewHome() {
   const td = S.log[today()] || 0;
   const zone = p >= 80 ? 'Уровень «8 и выше»' : p >= 60 ? 'Уровень «6 и выше»' : p >= 40 ? 'Уровень «4 и выше»' : 'Пока ниже порога 40%';
   return '<div class="view dash"><div class="col">' +
-    '<div class="greet"><h1>Привет, Екатерина!<span>До экзамена 6–8 часов. Идём по самым дорогим темам</span></h1></div>' +
+    '<div class="greet"><h1>Привет!<span>План на 6–8 часов: идём по самым дорогим темам</span></h1></div>' +
     (cur ? '<a class="card glow green now-card" href="' + cur.href + '"><div class="head"><span class="chip lime">сейчас · шаг ' + (SPRINT.indexOf(cur) + 1) + ' из ' + SPRINT.length + '</span>' + go() + '</div><div><h2>' + cur.title + '</h2><p class="muted">' + cur.note + '</p></div><div class="row"><span class="thin big">' + cur.min + '<small> мин</small></span><span class="btn pri" aria-hidden="true">Начать ' + ico('arrow') + '</span></div></a>'
       : '<div class="card glow green now-card"><h2>Спринт пройден</h2><p class="muted">Последний круг: <a href="#mistakes">ошибки</a>, <a href="#cheat">шпаргалка</a> и сон.</p></div>') +
     sprintCard('only-narrow') +
@@ -2854,7 +2870,7 @@ function renderQ(host, q, opts) {
     getRes = function () { const ok = inputs.every(good); return { ok: ok, score: ok ? q.pts : 0, state: { vals: inputs.map(function (i) { return i.value; }) } }; };
     reveal = function () { inputs.forEach(function (i) { i.disabled = true; i.classList.add(good(i) ? 'right' : 'wrong'); }); };
   } else if (q.t === 'open') {
-    const ta = el('<textarea placeholder="Ответ своими словами. Не уверена — всё равно попробуй: попытка вспомнить укрепляет память." aria-label="Ваш ответ"></textarea>');
+    const ta = el('<textarea placeholder="Ответ своими словами. Сомневаешься — всё равно попробуй: попытка вспомнить укрепляет память." aria-label="Ваш ответ"></textarea>');
     if (prior && prior.text) ta.value = prior.text; ta.oninput = upd; body.appendChild(ta);
     const keys = q.keys.map(function (k) { const p = k.split('|'); return { t: p[0], st: p[1].split(',').map(norm).filter(Boolean) }; });
     ready = function () { return ta.value.trim().length > 0; };
@@ -3204,6 +3220,7 @@ function route() {
   else { location.hash = '#home'; return; }
   curNav = nav; curSide = side; paintNav(nav); paintRail(side);
   main.innerHTML = html; if (bind) bind();
+  hubSum();
   if (!(h.indexOf('t/') === 0 && /\/s\d+$/.test(h))) window.scrollTo(0, 0);
   const t = side ? TBY[side] : null;
   document.title = (t ? t.short + ' · ' : '') + 'Экзамен по оргповедению';
